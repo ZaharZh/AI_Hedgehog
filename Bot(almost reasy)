@@ -1,0 +1,184 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Копия блокнота \"Копия блокнота \"bot.ipynb\"\"",
+      "provenance": [],
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    },
+    "accelerator": "GPU"
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/ZaharZh/AI_Hedgehog/blob/main/Bot(almost%20reasy)\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "uWp4vJxiU5-0",
+        "outputId": "d4b0ab06-3dfa-47f2-ae74-aa3a401ef162"
+      },
+      "source": [
+        "pip install pytelegrambotapi"
+      ],
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Requirement already satisfied: pytelegrambotapi in /usr/local/lib/python3.7/dist-packages (4.1.1)\n",
+            "Requirement already satisfied: requests in /usr/local/lib/python3.7/dist-packages (from pytelegrambotapi) (2.23.0)\n",
+            "Requirement already satisfied: idna<3,>=2.5 in /usr/local/lib/python3.7/dist-packages (from requests->pytelegrambotapi) (2.10)\n",
+            "Requirement already satisfied: urllib3!=1.25.0,!=1.25.1,<1.26,>=1.21.1 in /usr/local/lib/python3.7/dist-packages (from requests->pytelegrambotapi) (1.24.3)\n",
+            "Requirement already satisfied: certifi>=2017.4.17 in /usr/local/lib/python3.7/dist-packages (from requests->pytelegrambotapi) (2021.5.30)\n",
+            "Requirement already satisfied: chardet<4,>=3.0.2 in /usr/local/lib/python3.7/dist-packages (from requests->pytelegrambotapi) (3.0.4)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "xeAXd9DPUnVk"
+      },
+      "source": [
+        "import telebot\n",
+        "import torch\n",
+        "\n",
+        "import requests\n",
+        "import shutil\n",
+        "from torchvision import models, transforms\n",
+        "\n",
+        "from PIL import Image\n",
+        "\n",
+        "import cv2\n",
+        "\n"
+      ],
+      "execution_count": 10,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zSv-MW2BU5jm"
+      },
+      "source": [
+        "    preprocess = transforms.Compose([\n",
+        "    transforms.Resize(256),\n",
+        "    transforms.CenterCrop(224),\n",
+        "    transforms.ToTensor(),\n",
+        "    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),\n",
+        "])\n",
+        "    resnet18 = models.resnet18(pretrained=False)\n",
+        "    resnet18.load_state_dict(torch.load('melanoma.pth'))\n",
+        "    resnet18.eval()\n",
+        "    resnet18 = resnet18.to('cuda:0')\n",
+        "    #image = open('image.jpg', 'rb')"
+      ],
+      "execution_count": 11,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_fbMO2wAVbIa"
+      },
+      "source": [
+        "bot=telebot.TeleBot('2071454780:AAFLnVlhpg8bKNHl9kjJsa4zAb76pueJL4s')\n",
+        "@bot.message_handler(content_types=['text'])\n",
+        "def get_text_messages(message):\n",
+        "    if message.text == \"/info\":\n",
+        "        \n",
+        "        bot.send_message(message.from_user.id,'Отправь мне фото проблемнорго участка кожи.')\n",
+        "    elif message.text == \"/start\":\n",
+        "        bot.send_message(message.from_user.id,'Бот является медицинской рекомендательной системой и не с точностью определяет меланому на коже, а лишь дает рекомендацию, обращатся к врачу или нет. Бот не несет ответственность за ваше здоровье!')\n",
+        "        bot.send_message(message.from_user.id,'Привет, давай начнем! Отправь мне фото проблемного участка кожи.')\n",
+        "    else:\n",
+        "        bot.send_message(message.from_user.id,'Я тебя не понимаю! Напиши /info.')\n",
+        "@bot.message_handler(content_types=[\"photo\"])\n",
+        "def echo_message(message):\n",
+        "    file_info = bot.get_file(message.photo[-1].file_id)\n",
+        " \n",
+        "    url = 'https://api.telegram.org/file/bot{0}/{1}'.format('2071454780:AAFLnVlhpg8bKNHl9kjJsa4zAb76pueJL4s', file_info.file_path)\n",
+        "    response = requests.get(url, stream=True)\n",
+        "    \n",
+        "    # save the image to colab\n",
+        "    my_folder = './uploads'\n",
+        "    path = f'image.jpg'\n",
+        "    if response.status_code == 200:\n",
+        "        with open(path, 'wb') as f:\n",
+        "            response.raw.decode_content = True\n",
+        "            shutil.copyfileobj(response.raw, f)\n",
+        "\n",
+        "    image = Image.open('image.jpg')\n",
+        "    image_tensor = preprocess(image)\n",
+        "    image_tensor = image_tensor.to('cuda:0')\n",
+        "\n",
+        "    scores = resnet18(image_tensor.unsqueeze(0))\n",
+        "    max_score_id = torch.argmax(scores.view(-1)).item()\n",
+        "\n",
+        "    idx_to_label = dict{0='Мелонома',1=\"Не мелонома\"}\n",
+        "    result = idx_to_label[str(max_score_id)][1]\n",
+        "\n",
+        "    image_with_boxes = draw_boxes_on_image(image, results)\n",
+        "bot.polling(non_stop=True, interval=0)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 129
+        },
+        "id": "tPvIZTDxjfO2",
+        "outputId": "719e7d5f-962e-4fd1-cab5-64d130ec6e92"
+      },
+      "source": [
+        "image = Image.open('image.jpg')\n",
+        "image_tensor = preprocess(image)\n",
+        "image_tensor = image_tensor.to('cuda:0')\n",
+        "\n",
+        "scores = resnet18(image_tensor.unsqueeze(0))\n",
+        "max_score_id = torch.argmax(scores.view(-1)).item()\n",
+        "\n",
+        "idx_to_label = dict{}\n",
+        "result = idx_to_label[str(max_score_id)][1]\n",
+        "\n",
+        "image_with_boxes = draw_boxes_on_image(image, results)"
+      ],
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "SyntaxError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;36m  File \u001b[0;32m\"<ipython-input-12-a7fd200a6b17>\"\u001b[0;36m, line \u001b[0;32m8\u001b[0m\n\u001b[0;31m    idx_to_label = dict{0='Мелонома',1=\"Не мелонома\"}\u001b[0m\n\u001b[0m                       ^\u001b[0m\n\u001b[0;31mSyntaxError\u001b[0m\u001b[0;31m:\u001b[0m invalid syntax\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
